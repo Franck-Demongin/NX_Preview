@@ -1,2 +1,2 @@
 # NX_Preview
-Blender addon for generate preview for asset.
+Blender addon for generate asset's preview.
