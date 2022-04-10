@@ -1,4 +1,6 @@
 <<<<<<< HEAD
 /__pycache__
 /.vscode
+/.readme_assets
 /*.code-workspace
+/.gitignore

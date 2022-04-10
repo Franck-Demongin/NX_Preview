@@ -13,16 +13,16 @@
 
 bl_info = {
   "name" : "NX_Preview",
-  "author" : "neXXen",
-  "description" : "",
+  "author" : "Franck Demongin",
+  "description" : "Render preview for Asset Browser",
   "blender" : (3, 0, 0),
-  "version" : (0, 0, 1),
-  "location" : "",
-  "warning" : "",
+  "version" : (1, 0, 0),
+  "location" : "View 3D > Sidebar > NX_Tools",
+  "warning" : "Beta",
+  "doc_url" : "https://github.com/Franck-Demongin/NX_Preview",
   "category" : "Render"
 }
 
-from cgi import test
 import bpy
 from bpy.props import (StringProperty,
                        PointerProperty,
@@ -74,7 +74,7 @@ class MXPreviewProperties(PropertyGroup):
           ('DARK', 'dark', 'Dark', 2),
           ('NEUTRAL', 'neutral', 'Neutral', 3)
       },
-      default="LIGHT"
+      default="NEUTRAL"
   )
   use_background : BoolProperty(
       name="use_background",
@@ -169,7 +169,11 @@ class NXPREVIEW_PT_control_panel(Panel, PreviewPanel):
         
   @classmethod
   def poll(cls, context):
-      return context.mode == 'OBJECT'
+      obj = context.object
+      return (context.mode == 'OBJECT' and
+              obj is not None and
+              obj.type in ['MESH',]
+              )
 
   def draw(self, context):
     scene = context.scene
@@ -182,8 +186,6 @@ class NXPREVIEW_PT_control_panel(Panel, PreviewPanel):
 
     if scene.name == "NXPreviewScene":
       col.label(text="Render Preview")
-    elif obj is None or obj.type not in ['MESH', 'CURVE', 'FONT', 'EMPTY']:
-      col.label(text='Select an Object')
     else:
       # col.label(text="Selected Object")
       row = col.row(align=False)
@@ -204,10 +206,8 @@ class NXPREVIEW_PT_control_panel(Panel, PreviewPanel):
       if obj.asset_data is not None or scene.NXPreview.mark_as_asset:
         col.prop(scene.NXPreview, 'assign_preview', text="Assign Preview")  
   
-            
+      col.separator()      
       col = layout.column()
-      col.label(text="Preview Output")
-      col.prop(scene.NXPreview, "path", text="")
       op = col.operator('object.nxpreview', text="Render Preview")
       op.path = scene.NXPreview.path
       op.original_scene = scene.name
@@ -228,7 +228,7 @@ class NXPREVIEW_PT_control_panel(Panel, PreviewPanel):
       op.camera_align_v = scene.NXPreview.camera_align_v
 
 
-class NXPREVIEW_PT_Preview(Panel, PreviewPanel):
+class NXPREVIEW_PT_Background(Panel, PreviewPanel):
   bl_label = "Background"
   bl_parent_id = "NXPREVIEW_PT_control_panel"
   bl_options = {"DEFAULT_CLOSED"}
@@ -297,12 +297,30 @@ class NXPREVIEW_PT_Camera(Panel, PreviewPanel):
     row = col.row(align=True)
     row.prop(scene.NXPreview, "camera_align_v", text="V", expand=True)
 
+class NXPREVIEW_PT_Output(Panel, PreviewPanel):
+  bl_label = "Output"
+  bl_parent_id = "NXPREVIEW_PT_control_panel"
+  bl_options = {"DEFAULT_CLOSED"}
+
+  def draw(self, context):
+    scene = context.scene
+    obj = context.object
+    layout = self.layout
+    layout.use_property_split = True
+    layout.use_property_decorate = False
+
+    col = layout.column()
+
+    col.label(text="Preview Output")
+    col.prop(scene.NXPreview, "path", text="")
+
 classes = [
   MXPreviewProperties,
   NXPREVIEW_PT_control_panel,
-  NXPREVIEW_PT_Preview,
+  NXPREVIEW_PT_Background,
   NXPREVIEW_PT_Lighting,
   NXPREVIEW_PT_Camera,
+  NXPREVIEW_PT_Output,
   OBJECT_OT_NXToggleAsset,
   OBJECT_OT_NXPreview,
 ]
