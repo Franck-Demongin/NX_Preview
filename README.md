@@ -1,6 +1,9 @@
 # NX_Preview
 Blender addon for generate asset's preview.
 
+Blender 3.0
+Version : 0.1.0 Beta
+
 ## Installation
 Download ZIP file on your system.
 
