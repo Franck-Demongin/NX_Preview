@@ -36,8 +36,7 @@ There are a few options to control how the preview are rendered :
 It's possible to choose between _Backdrop_ or _Background_  
 If nothing is selected, the preview will be rendered on a transparent background.
 
-**Backdrop**
-
+#### Backdrop
 ![backdrop](https://user-images.githubusercontent.com/54265936/162631642-a81f8d07-5cb2-419e-86c0-72af783b73f3.png)
 
 This option add a backdrop under the object.  
@@ -46,8 +45,7 @@ Use a backdrop add soft shadows on and near the object.
 
 ![Suzanne_backdrop](https://user-images.githubusercontent.com/54265936/162631786-43b5fba3-73f1-4c56-8dc8-12bab6fb3973.png)
 
-**Background**
-
+#### Background
 ![background](https://user-images.githubusercontent.com/54265936/162631649-02b0c98b-b4aa-4d2d-a056-bab1e0e917d0.png)
 
 Add a background color after the render of the preview.  
@@ -65,6 +63,16 @@ Light _Top_, _Left_ and _Right_ adjust the power of each lights in the scene.
 
 ![Suzanne_lighting](https://user-images.githubusercontent.com/54265936/162634493-c9eb7d7a-52ca-43d6-b294-8f99b16d942d.png)
 
+### Camera
+Adjust the focal of the camera and the point of vue horizontally and vertically.
 
+![camera](https://user-images.githubusercontent.com/54265936/162635311-89e225dc-c343-4d38-a119-bdcb38a24d64.png)
 
+![Suzanne_camera](https://user-images.githubusercontent.com/54265936/162636201-6c6e7c67-f882-4ec6-b0e1-9a0912e93b0b.png)
+
+### Output
+Select a folder to save preview.  
+Let empty to use OS temp dir.
+
+![output](https://user-images.githubusercontent.com/54265936/162636297-3d2483ff-59ff-4a2e-aeec-400e19518e82.png)
 
