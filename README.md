@@ -14,7 +14,7 @@ Activate the addon
 
 ## Usage
 
-In Object Mode **NX_Preview** is located in the _Sidebar (N)_.
+In Object Mode **NX_Preview** is located in the _Sidebar (N) > NX_Tools_
 
 Select an object of type _mesh_
 
