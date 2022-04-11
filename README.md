@@ -1,9 +1,10 @@
 # NX_Preview
 
-Blender addon for generate asset's preview.
+Blender addon for generate assets preview.
 
-Blender : 3.0  
-Version : 1.0.0 Beta
+<img src="https://img.shields.io/badge/Blender-3.0.0-green" /> <img src="https://img.shields.io/badge/Python-3.10-blue" /> <img src="https://img.shields.io/badge/Addon-1.0.0.Beta-orange" /> 
+[![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](http://perso.crans.org/besson/LICENSE.html)
+[![Package Control total downloads](https://img.shields.io/packagecontrol/dt/SwitchDictionary.svg)](https://packagecontrol.io/packages/SwitchDictionary)
 
 ## Installation
 
