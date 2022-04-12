@@ -1,9 +1,9 @@
 # NX_Preview
 
-Blender addon for generate asset's preview.
+Blender addon for generate assets preview.
 
-Blender : 3.0  
-Version : 1.0.0 Beta
+<img src="https://img.shields.io/badge/Blender-3.0.0-green" /> <img src="https://img.shields.io/badge/Python-3.10-blue" /> <img src="https://img.shields.io/badge/Addon-1.0.0.Beta-orange" /> 
+[![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](http://perso.crans.org/besson/LICENSE.html)
 
 ## Installation
 
@@ -14,7 +14,7 @@ Activate the addon
 
 ## Usage
 
-In Object Mode **NX_Preview** is located in the _Sidebar (N)_.
+In Object Mode **NX_Preview** is located in the _Sidebar (N) > NX_Tools_
 
 Select an object of type _mesh_
 
