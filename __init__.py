@@ -378,7 +378,7 @@ class NXPREVIEW_PT_Output(Panel, PreviewPanel):
 class NXPREVIEW_PT_SaveAsset(Panel, PreviewPanel):
   bl_label = "Save Asset"
   bl_parent_id = "NXPREVIEW_PT_control_panel"
-  # bl_options = {"DEFAULT_CLOSED"}
+  bl_options = {"DEFAULT_CLOSED"}
 
   def draw_header(self, context):
     scene = context.scene
