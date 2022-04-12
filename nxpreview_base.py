@@ -12,7 +12,10 @@ from bpy.props import (StringProperty,
                        FloatProperty,
                        FloatVectorProperty)
 class NXPreview:
-  sc_name="NXPreviewScene"
+  scene_preview="NXPreviewScene"
+
+  scene_asset="Scene"
+
   file_format={
     "format": "PNG",
     "ext": "png" 
@@ -86,6 +89,18 @@ class NXPreview:
   camera_align_v : StringProperty(
     default="CENTER"
   )
+  save_in_file_folder : BoolProperty(
+    default=False
+  )
+  save_asset : BoolProperty(
+    default=False
+  )
+  library_id : IntProperty(
+    default=0
+  )
+  apply_modifier : BoolProperty(
+    default=False
+  )
 
   @classmethod
   def poll(cls, context):
@@ -97,7 +112,8 @@ class NXPreview:
     meshes = [mesh for mesh in bpy.data.meshes if mesh.users == 0 and mesh.name != "Backdrop"]
     list(map(lambda mesh: bpy.data.meshes.remove(mesh, do_unlink=True), meshes))
     
-    lights = [light for light in bpy.data.lights if light.users == 0 and light.name not in ["Area_1","Area_2","Area_3"]]
+    lights = [light for light in bpy.data.lights if light.users == 0 and 
+              light.name not in ["Area_1","Area_2","Area_3"]]
     list(map(lambda light: bpy.data.lights.remove(light, do_unlink=True), lights))
 
     cams = [cam for cam in bpy.data.objects if cam.type == "CAMERA" and cam.users == 0]
@@ -115,24 +131,27 @@ class NXPreview:
     imgs = [img for img in bpy.data.images if img.users == 0]
     list(map(lambda img: bpy.data.images.remove(img, do_unlink=True), imgs))
   
-  def purge_scene(self):
+  def purge_scene(self, scene_name):
     '''Remove all objects in the scene'''
-    for o in bpy.data.scenes[self.sc_name].objects:  
+    for o in bpy.data.scenes[scene_name].objects:  
       bpy.data.objects.remove(o, do_unlink=True)
 
-  def create_scene_and_switch_to(self, context):
-    '''Create scene in not exist and switch to it'''
-    if self.sc_name not in bpy.data.scenes:
-      bpy.data.scenes.new(self.sc_name)    
-    context.window.scene = bpy.data.scenes[self.sc_name]
+  def create_scene_and_switch_to(self, context, scene_name, switch_to=True):
+    '''Create scene scene_name in not exist and switch to it'''
+    if scene_name not in bpy.data.scenes:
+      bpy.data.scenes.new(scene_name)    
+    if switch_to:
+      context.window.scene = bpy.data.scenes[scene_name]
   
   def copy_object(self, context):
     obj = bpy.data.objects[self.original_object]
     copy = obj.copy()
+    copy.data = obj.data.copy()
     copy.name = "Preview"
     context.collection.objects.link(copy)
     context.view_layer.objects.active = copy
     copy.select_set(True)
+    bpy.ops.object.convert(target="MESH")
     copy.location = (0,0,0)
     copy.rotation_euler = (0,0,0)
     copy.hide_render = False
@@ -305,10 +324,9 @@ class NXPreview:
 
   def render_preview(self, context):  
     p = self.path
-    if len(self.path) == 0:
-      if bpy.data.is_saved:
+    if self.save_in_file_folder and bpy.data.is_saved:
         p = os.path.dirname(bpy.data.filepath)
-      else:
+    elif len(self.path) == 0:
         p = tempfile.gettempdir()
     self.filepath = os.path.join(p, self.original_object)
 

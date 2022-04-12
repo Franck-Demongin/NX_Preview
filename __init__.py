@@ -23,6 +23,7 @@ bl_info = {
   "category" : "Render"
 }
 
+import tempfile
 import bpy
 from bpy.props import (StringProperty,
                        PointerProperty,
@@ -31,8 +32,11 @@ from bpy.props import (StringProperty,
                        IntProperty,
                        FloatProperty,
                        FloatVectorProperty)
-from bpy.types import Panel, PropertyGroup
-from . nxpreview_op import OBJECT_OT_NXToggleAsset, OBJECT_OT_NXPreview
+from bpy.types import Panel, PropertyGroup, UIList
+from . nxpreview_op import (OBJECT_OT_NXToggleAsset, 
+                            OBJECT_OT_NXPreview, 
+                            ASSET_OT_NXAddLibrary,
+                            ASSET_OT_NXRemoveLibrary)
 
 def update_backdrop(self, context):
   if self.use_backdrop:
@@ -42,10 +46,23 @@ def update_background(self, context):
   if self.use_background:
     self.use_backdrop = False  
 
+def library_id_update(self, context):
+  default_id = self.bl_rna.properties.get('library_id').default
+  id = self.library_id
+  
+  libraries_len = len(context.preferences.filepaths.asset_libraries)
+
+  if (libraries_len == 0 or
+      len(context.preferences.filepaths.asset_libraries[id].name) == 0
+  ):
+    self.save_asset = False
+
+tempD = tempfile.gettempdir()
+
 class MXPreviewProperties(PropertyGroup):
   path : StringProperty(
       name="path",
-      description="Path to preview output",
+      description=f"Path to preview output.\nLet empty to save in tempdir: {tempD}",
       default="",
       maxlen=1024,
       subtype='DIR_PATH'
@@ -70,17 +87,17 @@ class MXPreviewProperties(PropertyGroup):
       name="Backdrop Style",
       description="Choose backdrop style",
       items={
-          ('LIGHT', 'light', 'Light', 1),
-          ('DARK', 'dark', 'Dark', 2),
-          ('NEUTRAL', 'neutral', 'Neutral', 3)
+        ('NEUTRAL', 'neutral', 'Neutral'),
+        ('LIGHT', 'light', 'Light'),
+        ('DARK', 'dark', 'Dark')
       },
       default="NEUTRAL"
   )
   use_background : BoolProperty(
-      name="use_background",
-      description="Add a background",
-      default=False,
-      update=update_background
+    name="use_background",
+    description="Add a background",
+    default=False,
+    update=update_background
   )
   background_color : FloatVectorProperty(
     name="Background Color",
@@ -139,9 +156,9 @@ class MXPreviewProperties(PropertyGroup):
       name="Horizontal Alignement",
       description="Choose camera horizontal alignement",
       items={
-          ('LEFT', 'left', 'Left', 1),
-          ('CENTER', 'center', 'Center', 2),
-          ('RIGHT', 'right', 'Right', 3)
+        ('LEFT', 'left', 'Left'),
+        ('CENTER', 'center', 'Center'),
+        ('RIGHT', 'right', 'Right')
       },
       default="RIGHT"
   )
@@ -149,12 +166,47 @@ class MXPreviewProperties(PropertyGroup):
       name="Vertical Alignement",
       description="Choose camera vertical alignement",
       items={
-          ('TOP', 'top', 'Top', 1),
-          ('CENTER', 'center', 'Center', 2),
-          ('BOTTOM', 'bottom', 'Bottom', 3)
+        ('TOP', 'top', 'Top'),
+        ('CENTER', 'center', 'Center'),
+        ('BOTTOM', 'bottom', 'Bottom')
       },
       default="CENTER"
   )
+  save_in_file_folder : BoolProperty(
+    name="Save in File Folder",
+    description="Save preview in .blend folder",
+    default=False
+  )
+  save_asset : BoolProperty(
+    name="Save Asset",
+    description="Save asset in selected library",
+    default=False
+  )
+  library_id : IntProperty(default=0, min=0, update=library_id_update)
+  apply_modifiers : BoolProperty(
+    name="Apply Modifiers",
+    description="Apply all modifiers before save asset in library",
+    default=False
+  )
+
+
+class PREFERENCE_UL_asset_library(UIList):
+   
+  def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+    self.lib_id = index
+    library = item
+    row = layout.row(align=False)
+
+    if self.layout_type in {'DEFAULT', 'COMPACT'}:
+      row.alert = not library.name
+      row.prop(library, "name", text="Name", emboss=False)
+      row.alert = False
+      row.prop(library, "path", text="", icon_only=True, icon="ADD", emboss=False)
+        
+    elif self.layout_type in {'GRID'}:
+      layout.alignment = 'CENTER'
+      layout.label(text="", icon_value=icon)
+
 
 class PreviewPanel:
   bl_space_type = 'VIEW_3D'
@@ -187,7 +239,6 @@ class NXPREVIEW_PT_control_panel(Panel, PreviewPanel):
     if scene.name == "NXPreviewScene":
       col.label(text="Render Preview")
     else:
-      # col.label(text="Selected Object")
       row = col.row(align=False)
       row.label(text=context.object.name)
       
@@ -226,6 +277,10 @@ class NXPREVIEW_PT_control_panel(Panel, PreviewPanel):
       op.camera_focal = scene.NXPreview.camera_focal
       op.camera_align_h = scene.NXPreview.camera_align_h
       op.camera_align_v = scene.NXPreview.camera_align_v
+      op.save_in_file_folder = scene.NXPreview.save_in_file_folder
+      op.save_asset = scene.NXPreview.save_asset
+      op.library_id = scene.NXPreview.library_id
+      op.apply_modifier = scene.NXPreview.apply_modifiers
 
 
 class NXPREVIEW_PT_Background(Panel, PreviewPanel):
@@ -281,7 +336,6 @@ class NXPREVIEW_PT_Camera(Panel, PreviewPanel):
 
   def draw(self, context):
     scene = context.scene
-    obj = context.object
     layout = self.layout
     layout.use_property_split = True
     layout.use_property_decorate = False
@@ -297,6 +351,7 @@ class NXPREVIEW_PT_Camera(Panel, PreviewPanel):
     row = col.row(align=True)
     row.prop(scene.NXPreview, "camera_align_v", text="V", expand=True)
 
+
 class NXPREVIEW_PT_Output(Panel, PreviewPanel):
   bl_label = "Output"
   bl_parent_id = "NXPREVIEW_PT_control_panel"
@@ -306,23 +361,77 @@ class NXPREVIEW_PT_Output(Panel, PreviewPanel):
     scene = context.scene
     obj = context.object
     layout = self.layout
-    layout.use_property_split = True
+    layout.use_property_split = False
     layout.use_property_decorate = False
 
     col = layout.column()
-
     col.label(text="Preview Output")
-    col.prop(scene.NXPreview, "path", text="")
+
+    if bpy.data.is_saved:
+      col.prop(scene.NXPreview, "save_in_file_folder", text="Save in File Folder")
+    
+    if not scene.NXPreview.save_in_file_folder:
+      col.label(text="Select Folder")
+      col.prop(scene.NXPreview, "path", text="")
+
+
+class NXPREVIEW_PT_SaveAsset(Panel, PreviewPanel):
+  bl_label = "Save Asset"
+  bl_parent_id = "NXPREVIEW_PT_control_panel"
+  # bl_options = {"DEFAULT_CLOSED"}
+
+  def draw_header(self, context):
+    scene = context.scene
+    layout = self.layout
+    libraries = context.preferences.filepaths.asset_libraries
+    
+    col = layout.column()
+    if (len(libraries) == 0 or 
+        len(libraries[scene.NXPreview.library_id].name) == 0 or
+        (context.object.asset_data is None and not scene.NXPreview.mark_as_asset)
+    ):
+      col.enabled = False
+    col.prop(scene.NXPreview, 'save_asset', text="")
+  
+  def draw(self, context):
+    scene = context.scene
+    layout = self.layout
+    layout.use_property_split = False
+    layout.use_property_decorate = False
+
+    col = layout.column()
+    col.prop(scene.NXPreview, 'apply_modifiers', text="Apply Modifiers")
+    row = layout.row(align=False)
+
+    fp = context.preferences.filepaths
+    col = row.column(align=True)
+    col.template_list(
+      "PREFERENCE_UL_asset_library", 
+      "", 
+      fp, 
+      "asset_libraries", 
+      scene.NXPreview, 
+      "library_id", 
+      type="DEFAULT"
+    )
+    col = row.column(align=True)
+    col.operator('asset.nxadd_library', text="", icon="ADD")
+    op = col.operator('asset.nxremove_library', text="", icon="REMOVE")
+
 
 classes = [
+  PREFERENCE_UL_asset_library,
   MXPreviewProperties,
   NXPREVIEW_PT_control_panel,
   NXPREVIEW_PT_Background,
   NXPREVIEW_PT_Lighting,
   NXPREVIEW_PT_Camera,
   NXPREVIEW_PT_Output,
+  NXPREVIEW_PT_SaveAsset,
   OBJECT_OT_NXToggleAsset,
   OBJECT_OT_NXPreview,
+  ASSET_OT_NXAddLibrary,
+  ASSET_OT_NXRemoveLibrary,
 ]
 
 def register():
