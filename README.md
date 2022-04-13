@@ -5,6 +5,9 @@ Blender addon for generate assets preview.
 <img src="https://img.shields.io/badge/Blender-3.0.0-green" /> <img src="https://img.shields.io/badge/Python-3.10-blue" /> <img src="https://img.shields.io/badge/Addon-1.0.0.Beta-orange" /> 
 [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](http://perso.crans.org/besson/LICENSE.html)
 
+> *Addon under development. Some features can be deleted and others appear.  
+> **Use with caution!***
+
 ## Installation
 
 Download ZIP file on your system.
@@ -39,6 +42,7 @@ There are a few options to control how the preview are rendered :
 - _control the lighting_
 - _change the point of view_
 - _select the output folder_
+- _save asset in library_ [![Generic badge](https://img.shields.io/badge/NEW-blue.svg)](https://shields.io/)
 
 ### Background
 
@@ -85,7 +89,26 @@ Adjust the focal of the camera and the point of vue horizontally and vertically.
 
 ### Output
 
-Select a folder to save preview.  
+Select a folder to save preview.
+
+![output](https://user-images.githubusercontent.com/54265936/163257840-a923596f-7986-4c59-93ac-a12d2d5d9bca.png)
+
+The _Save to File Folder_ option is displayed if the .blend file is saved. Once selected, the preview will be saved in its folder. [![Generic badge](https://img.shields.io/badge/NEW-blue.svg)](https://shields.io/)
+
+The folder selector allows to choose a folder to save the previews.  
 Let empty to use OS temp dir.
 
-![output](https://user-images.githubusercontent.com/54265936/162636297-3d2483ff-59ff-4a2e-aeec-400e19518e82.png)
+### Save Asset [![Generic badge](https://img.shields.io/badge/NEW-blue.svg)](https://shields.io/)
+
+This option is allowed if the object is marked as asset or if the option _Mark as Asset_ is active and if a library exist and is selected.
+
+![save_asset](https://user-images.githubusercontent.com/54265936/163256970-0da8411b-8f71-4557-beac-ea9193c8d2a1.png)
+
+The libraries are selectable by clicking on their name, (double-click to edit it).  
+The folder is also editable by clicking on the icon. Libraries could be deleted (files are not) and some new libraries can be add.
+
+To save an asset, select one library, and render the preview, a .blend file will be registered in the appropriate folder with the name of the object (files with the same name will be remove).
+
+
+
+
