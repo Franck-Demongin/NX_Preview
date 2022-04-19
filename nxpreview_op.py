@@ -3,53 +3,22 @@ from math import radians
 import bpy
 from bpy.props import StringProperty, BoolProperty
 from bpy.types import Operator
-from . nxpreview_base import NXPreview
+from . nxbase_op import NXBase
 
-class OBJECT_OT_NXToggleAsset(Operator, NXPreview):
-  bl_idname = "object.nxtoggle_asset"
-  bl_label = "Toggle Asset"
-  bl_description = "Marh as asset if it's not, clear asset if it's"
-  bl_options = {"INTERNAL"}
-
-  is_asset : bpy.props.BoolProperty(
-    name="is_asset",
-    default=False
-  )
-
-  def execute(self, context):
-    obj = context.object
-
-    if self.is_asset:
-      obj.asset_clear()
-      msg = "Object asset is remove"
-    else:
-      obj.asset_mark()
-      msg = "Obbject is marked as asset"
-
-    # needed to update scene
-    bpy.ops.object.editmode_toggle()
-    bpy.ops.object.editmode_toggle()
-
-    print(f"====={msg}=====")
-    self.report({'INFO'}, msg)
-    return {'FINISHED'}
-
-
-class OBJECT_OT_NXPreview(Operator, NXPreview):
-  bl_idname = "object.nxpreview"
+class OBJECT_OT_NXPreview(Operator, NXBase):
+  bl_idname = "object.nx_preview"
   bl_label = "Render Preview"
   bl_options = {"INTERNAL"}
 
   def after_render_preview(self, scene, depsgraph):
     obj = bpy.data.objects[self.original_object]
-    # if self.mark_as_asset or obj.asset_data is not None:
     if self.mark_as_asset or obj.asset_data is not None:
       obj.asset_mark()
     
       if self.assign_preview:
         bpy.ops.ed.lib_id_load_custom_preview(
           {"id":obj}, 
-          filepath=f"{self.filepath}.{self.file_format['ext']}"
+          filepath=f"{self.preview_filepath}.{self.file_format['ext']}"
         )
       else:
         obj.asset_generate_preview()
@@ -61,58 +30,69 @@ class OBJECT_OT_NXPreview(Operator, NXPreview):
 
     print("=====Preview rendered=====")
 
-    if self.save_asset:
-      libraries = bpy.context.preferences.filepaths.asset_libraries
-      if (self.library_id >= 0 and 
-          self.library_id < len(libraries) and
-          len(libraries[self.library_id].name) > 0 and
-          os.path.isdir(libraries[self.library_id].path)
-      ):
-        path_ = os.path.join(libraries[self.library_id].path, f"{self.original_object}.blend")
+    bpy.ops.asset.nx_asset_save(
+                                save_asset=self.save_asset,
+                                filepath=f"{self.preview_filepath}.{self.file_format['ext']}",
+                                assign_preview=self.assign_preview,
+                                library_id=self.library_id,
+                                original_scene=self.original_scene,
+                                original_object=self.original_object,
+                                apply_modifiers=self.apply_modifier
+                              )
+    # if self.save_asset:
+    #   libraries = bpy.context.preferences.filepaths.asset_libraries
+    #   if (self.library_id >= 0 and 
+    #       self.library_id < len(libraries) and
+    #       len(libraries[self.library_id].name) > 0 and
+    #       os.path.isdir(libraries[self.library_id].path)
+    #   ):
+    #     path_ = os.path.join(libraries[self.library_id].path, f"{self.original_object}.blend")
         
-        bpy.ops.file.make_paths_absolute()
+    #     if bpy.data.is_saved:
+    #       bpy.ops.file.make_paths_absolute()
 
-        bpy.context.scene.name = f"{self.original_scene}_"
-        self.create_scene_and_switch_to(bpy.context, self.scene_asset, True)
+    #     bpy.context.scene.name = f"{self.original_scene}_"
+    #     self.create_scene_and_switch_to(bpy.context, self.scene_asset, True)
 
-        o = obj
-        loc = obj.location.copy()
-        if self.apply_modifier:
-          co = obj.copy()
-          co.data = obj.data.copy()
-          co.data.name = obj.data.name
-          co.name = obj.name
-          bpy.context.collection.objects.link(co)
-          co.select_set(True)
-          bpy.context.view_layer.objects.active = co
-          bpy.ops.object.convert(target="MESH")
-          o = co
-          if self.mark_as_asset or obj.asset_data is not None:
-            o.asset_mark()          
-            if self.assign_preview:
-              bpy.ops.ed.lib_id_load_custom_preview(
-                {"id":o}, 
-                filepath=f"{self.filepath}.{self.file_format['ext']}"
-              )
-            else:
-              o.asset_generate_preview()
-        else:
-          bpy.context.collection.objects.link(o)
-        # o.location = (0,0,0)
-        data = {bpy.data.scenes[bpy.context.scene.name]}
-        bpy.data.libraries.write(path_, data)
-        bpy.data.scenes.remove(bpy.data.scenes[self.scene_asset])
-        bpy.context.scene.name = self.original_scene
-        if self.apply_modifier:
-          obj.data.name = o.data.name
-          obj.name = o.name
-          bpy.data.objects.remove(o, do_unlink=True)
-        # else:
-        #   obj.location = loc
-        self.purge_orphan_data()
-        bpy.ops.file.make_paths_relative()
-      else:
-        print('LIB NOT EXIST')
+    #     o = obj
+    #     loc = obj.location.copy()
+    #     if self.apply_modifier:
+    #       co = obj.copy()
+    #       co.data = obj.data.copy()
+    #       co.data.name = obj.data.name
+    #       co.name = obj.name
+    #       bpy.context.collection.objects.link(co)
+    #       co.select_set(True)
+    #       bpy.context.view_layer.objects.active = co
+    #       bpy.ops.object.convert(target="MESH")
+    #       o = co
+    #       if self.mark_as_asset or obj.asset_data is not None:
+    #         o.asset_mark()          
+    #         if self.assign_preview:
+    #           bpy.ops.ed.lib_id_load_custom_preview(
+    #             {"id":o}, 
+    #             filepath=f"{self.filepath}.{self.file_format['ext']}"
+    #           )
+    #         else:
+    #           pass
+    #           # print('GENERATE_PREVIEW', o.name)
+    #           # o.asset_generate_preview()
+    #     else:
+    #       bpy.context.collection.objects.link(o)
+    #     data = {bpy.data.scenes[bpy.context.scene.name]}
+    #     bpy.data.libraries.write(path_, data)
+    #     bpy.data.scenes.remove(bpy.data.scenes[self.scene_asset])
+    #     bpy.context.scene.name = self.original_scene
+    #     if self.apply_modifier:
+    #       obj.data.name = o.data.name
+    #       obj.name = o.name
+    #       bpy.data.objects.remove(o, do_unlink=True)
+    #     self.purge_orphan_data()
+        
+    #     if bpy.data.is_saved:
+    #       bpy.ops.file.make_paths_relative()
+    #   else:
+    #     print('LIB NOT EXIST')
 
     self.report({'INFO'}, "Preview rendered")
     
@@ -154,38 +134,3 @@ class OBJECT_OT_NXPreview(Operator, NXPreview):
     if self.after_render_preview not in bpy.app.handlers.render_post:
        bpy.app.handlers.render_post.append(self.after_render_preview)
     return self.execute(context)
-
-
-class ASSET_OT_NXAddLibrary(Operator):
-  bl_idname = "asset.nxadd_library"
-  bl_label = "Add Lirary"
-  bl_options = {"INTERNAL"}
-
-  def execute(self, context):
-    scene = context.scene
-    libraries = context.preferences.filepaths.asset_libraries
-    bpy.ops.preferences.asset_library_add("INVOKE_DEFAULT")
-    scene.NXPreview.library_id = len(libraries)
-
-    return {"FINISHED"}
-
-
-class ASSET_OT_NXRemoveLibrary(Operator):
-  bl_idname = "asset.nxremove_library"
-  bl_label = "Remove Lirary"
-  bl_options = {"INTERNAL"}
-
-  def execute(self, context):
-    scene = context.scene
-    libraries = context.preferences.filepaths.asset_libraries
-    library_len = len(libraries)
-
-    library_id = scene.NXPreview.library_id
-    bpy.ops.preferences.asset_library_remove("INVOKE_DEFAULT", index=library_id)
-    
-    library_id -= 1 if library_id > 0 else 0
-    scene.NXPreview.library_id = library_id
-
-    return {"FINISHED"}
-
-
